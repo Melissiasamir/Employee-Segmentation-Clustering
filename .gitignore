@@ -1,0 +1,31 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python package info
+*.egg-info/
+*.egg
+
+# Virtual environment folders
+venv/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Data files 
+# Ignore all CSVs by default except the cleaned dataset
+data/*.csv
+!data/cleaned_employees_dataset.csv
+
+# Excel files (if any)
+data/*.xlsx
+
+# OS system files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
