@@ -4,7 +4,9 @@ import numpy as np
 import joblib
 import os
 
-# 1. Set page config (MUST be the first streamlit command)
+# ===========================
+# Page Config
+# ===========================
 st.set_page_config(
     page_title="Employee Segmentation Predictor",
     page_icon="👥",
@@ -12,20 +14,81 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. CSS Styling
+# ===========================
+# CSS Styling
+# ===========================
 st.markdown("""
 <style>
-    .main { background-color: #0e1117; }
-    .stAlert { background-color: #1e3a2e; border-left: 5px solid #4caf50; }
-    .result-box { padding: 20px; border-radius: 10px; margin: 10px 0; }
-    .success-box { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    :root {
+        --primary: #2563eb;
+        --primary-light: #e9f0ff;
+        --card: #0f172a;
+        --muted: #94a3b8;
+        --border: #1e293b;
+        --shadow: 0 14px 40px rgba(15, 23, 42, 0.25);
+    }
+    .main { background-color: #0b1220; }
+    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+    .card {
+        background-color: var(--card);
+        padding: 22px;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+    .section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 0.4rem;
+    }
+    .muted { color: var(--muted); }
+    .section-card {
+        background-color: #0d1628;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 16px 12px;
+        margin-bottom: 14px;
+        box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+    }
+    .section-card h3, .section-card h4 {
+        margin-bottom: 0.35rem;
+    }
+    .stButton>button {
+        background: linear-gradient(120deg, #2563eb, #1d4ed8);
+        color: white;
+        border-radius: 10px;
+        padding: 0.65rem 1.2rem;
+        border: none;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+    }
+    .stButton>button:hover { background: #1d4ed8; }
+    .stSelectbox > div[data-baseweb="select"] { height: 46px; }
+    label { color: #e2e8f0 !important; font-weight: 600; }
+    .stNumberInput, .stSelectbox, .stTextInput, .stSlider { margin-bottom: 8px; }
+    .stDataFrame { border-radius: 12px; overflow: hidden; }
+    .badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: var(--primary-light);
+        color: #1d4ed8;
+        border: 1px solid #cbd5f5;
+    }
+    /* Slider polish */
+    input[type="range"]::-webkit-slider-thumb { background: #2563eb; border: 2px solid #0b1220; }
+    input[type="range"]::-moz-range-thumb { background: #2563eb; border: 2px solid #0b1220; }
+    input[type="range"]::-webkit-slider-runnable-track { background: #1e293b; }
+    input[type="range"]::-moz-range-track { background: #1e293b; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Model Loading Function
+# ===========================
+# Load Model
+# ===========================
 @st.cache_resource
 def load_model():
-    # We check for both .joblib and .pkl for safety
     joblib_path = os.path.join('Model', 'final_clustering_model.joblib')
     pickle_path = os.path.join('Model', 'final_clustering_model.pkl')
     
@@ -43,377 +106,187 @@ def load_model():
     except Exception as e:
         return None, str(e)
 
-# 4. Initialize the model
 model, error = load_model()
-# ============================================================================
-# SIDEBAR
-# ============================================================================
 
-# Model status
-if model is not None:
+if model:
     st.sidebar.success("✅ Model loaded successfully!")
 else:
-    st.sidebar.error(f"❌ Model loading failed")
+    st.sidebar.error("❌ Model loading failed")
     if error:
         st.sidebar.caption(f"Error: {error}")
 
-st.sidebar.markdown("---")
+st.title("Employee Segmentation Predictor")
 
-# Main section
-st.sidebar.title("👥 Employee Segmentation")
-
-st.sidebar.markdown("---")
-
-# How to Use
+# ===========================
+# Sidebar Info
+# ===========================
 with st.sidebar.expander("📖 How to Use", expanded=True):
     st.markdown("""
-    1. **Enter employee information** in the form fields
-    
-    2. **Click 'Predict Segment'** button to analyze
-    
-    3. **View the prediction** and segment details
+    1. Enter employee information in the form fields  
+    2. Click 'Predict Segment' button  
+    3. View the prediction and segment details in the 'Prediction Results' tab
     """)
 
-st.sidebar.markdown("---")
-
-# Model Info
-with st.sidebar.expander("ℹ️ Model Info"):
+with st.sidebar.expander("ℹ️ Model Info", expanded=True):
     st.markdown("""
-    **Framework:** scikit-learn
-    
-    **Algorithm:** K-Means Clustering (k=4)
-    
-    **Pipeline Components:**
-    - StandardScaler (feature scaling)
-    - PCA (dimensionality reduction)
-    - K-Means clustering
-    
-    **Features Used:**
-    - Age
-    - Education Level
-    - Department
-    - Length of Service
-    - Number of Trainings
-    - Previous Year Rating
-    - KPIs Met (>80%)
-    - Awards Won
-    - Average Training Score
+    **Framework:** scikit-learn  
+    **Algorithm:** K-Means Clustering  
+    **Pipeline Components:**  
+    - Preprocessing (StandardScaler / OneHotEncoder)  
+    - PCA (dimensionality reduction)  
+    - K-Means clustering  
+    **Features:** age, gender, region, education, department, length_of_service, previous_year_rating, no_of_trainings, avg_training_score, KPIs_met, awards_won, recruitment_channel
     """)
 
-# ============================================================================
-# MAIN CONTENT
-# ============================================================================
+# ===========================
+# Tabs
+# ===========================
+tabs = st.tabs(["📝 Input Employee Info", "🎯 Prediction Results"])
 
-st.title("🎯 Employee Segmentation System")
-st.markdown("*Advanced ML-powered employee classification for HR analytics*")
-st.markdown("---")
-
-# Check if form has been submitted (stored in session state)
-if 'prediction_made' not in st.session_state:
-    st.session_state.prediction_made = False
-
-# BEFORE PREDICTION: Show input form
-if not st.session_state.prediction_made:
-    st.subheader("📝 Enter Employee Information")
-    
-    # Center the form
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        with st.form("employee_form"):
-            st.markdown("### Employee Details")
-            
-            # Personal Information
+# ===========================
+# Tab 1: Input
+# ===========================
+with tabs[0]:
+    st.header("Employee Information & Performance Metrics")
+    with st.form("employee_form"):
+        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        # Employee Info
+        st.subheader("👤 Employee Info")
+        col1, col2 = st.columns(2)
+        with col1:
             age = st.number_input("Age", min_value=18, max_value=70, value=30)
-            
-            education = st.selectbox(
-                "Education Level",
-                ["Bachelor's", "Master's & above", "Below Secondary"]
-            )
-            
-            department = st.selectbox(
-                "Department",
-                ["Sales & Marketing", "Operations", "Technology", "Analytics", 
-                 "R&D", "Procurement", "Finance", "HR", "Legal"]
-            )
-            
-            length_of_service = st.number_input(
-                "Length of Service (years)",
-                min_value=0, max_value=40, value=3
-            )
-            
-            st.markdown("### Performance Metrics")
-            
-            previous_year_rating = st.slider(
-                "Previous Year Rating",
-                min_value=1, max_value=5, value=3
-            )
-            
-            no_of_trainings = st.number_input(
-                "Number of Trainings Completed",
-                min_value=0, max_value=20, value=2
-            )
-            
-            avg_training_score = st.slider(
-                "Average Training Score",
-                min_value=0, max_value=100, value=70
-            )
-            
-            KPIs_met = st.selectbox(
-                "KPIs Met More Than 80%",
-                ["Yes", "No"]
-            )
-            
-            awards_won = st.selectbox(
-                "Awards Won",
-                ["Yes", "No"]
-            )
-            
-            st.markdown("---")
-            
-            # Submit button
-            submitted = st.form_submit_button(
-                "🔍 Predict Segment",
-                use_container_width=True,
-                type="primary"
-            )
-            
-            if submitted:
-                if model is None:
-                    st.error("⚠️ Model not loaded. Cannot make prediction.")
-                else:
-                    # Store inputs in session state
-                    st.session_state.inputs = {
-                        'age': age,
-                        'education': education,
-                        'department': department,
-                        'length_of_service': length_of_service,
-                        'previous_year_rating': previous_year_rating,
-                        'no_of_trainings': no_of_trainings,
-                        'avg_training_score': avg_training_score,
-                        'KPIs_met': KPIs_met,
-                        'awards_won': awards_won
-                    }
-                    
-                    # Make prediction
-                    try:
-                        # Create input dataframe matching the exact features the model expects
-                        # The model expects these columns in this order
-                        input_data = pd.DataFrame({
-                            'age': [age],
-                            'education': [education],
-                            'department': [department],
-                            'length_of_service': [length_of_service],
-                            'no_of_trainings': [no_of_trainings],
-                            'previous_year_rating': [previous_year_rating],
-                            'KPIs_met_more_than_80': [1 if KPIs_met == "Yes" else 0],
-                            'awards_won': [1 if awards_won == "Yes" else 0],
-                            'avg_training_score': [avg_training_score]
-                        })
-                        
-                        # Predict using the pipeline (it handles all preprocessing)
-                        predicted_cluster = model.predict(input_data)[0]
-                        
-                        # Store prediction
-                        st.session_state.prediction = predicted_cluster
-                        st.session_state.prediction_made = True
-                        st.rerun()
-                        
-                    except Exception as e:
-                        st.error(f"❌ Prediction error: {str(e)}")
-                        st.info("💡 Please check that all input values are correct.")
-                        st.code(f"Debug info: {str(e)}", language="text")
+            gender = st.selectbox("Gender", ["Male", "Female"], index=0)
+            region = st.selectbox("Region", ["North", "South", "East", "West"], index=0)
+            recruitment_channel = st.selectbox("Recruitment Channel", ["HR Referral", "LinkedIn", "Career Portal"], index=0)
+        with col2:
+            education = st.selectbox("Education Level", ["Bachelor's", "Master's & above", "Below Secondary"], index=0)
+            department = st.selectbox("Department", ["Sales & Marketing", "Operations", "Technology", "Analytics", "R&D", "Procurement", "Finance", "HR", "Legal"], index=0)
+            length_of_service = st.number_input("Length of Service (years)", min_value=0, max_value=40, value=3)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# AFTER PREDICTION: Show results
-else:
-    # Cluster definitions (based on typical HR segmentation patterns)
-    cluster_info = {
-        0: {
-            "name": "High Performers & Rising Stars",
-            "description": "Employees with exceptional performance metrics and strong development trajectory",
-            "characteristics": [
-                "High average training scores (typically 75+)",
-                "Consistently meets or exceeds KPIs (>80%)",
-                "Multiple awards and recognitions",
-                "Strong previous year ratings (4-5)",
-                "Active in training and development programs"
-            ],
-            "risk": "Low",
-            "color": "#4caf50",
-            "recommendations": [
-                "Fast-track for leadership development programs",
-                "Provide challenging stretch assignments and projects",
-                "Ensure competitive compensation and benefits package",
-                "Assign as mentors for junior employees",
-                "Regular career progression discussions",
-                "Consider for critical business initiatives"
-            ]
-        },
-        1: {
-            "name": "Solid Contributors",
-            "description": "Reliable employees with steady, consistent performance",
-            "characteristics": [
-                "Moderate to good training scores (60-75)",
-                "Generally meets KPIs with occasional variations",
-                "Stable tenure and reliable work output",
-                "Average previous year ratings (3-4)",
-                "Regular but moderate training participation"
-            ],
-            "risk": "Low",
-            "color": "#2196f3",
-            "recommendations": [
-                "Maintain current engagement and recognition practices",
-                "Provide skill enhancement opportunities for career growth",
-                "Encourage cross-functional collaboration",
-                "Recognize and appreciate long-term contributions",
-                "Offer lateral movement opportunities",
-                "Support work-life balance initiatives"
-            ]
-        },
-        2: {
-            "name": "Development Focus Group",
-            "description": "Employees requiring targeted support and performance improvement",
-            "characteristics": [
-                "Below-average training scores (<60)",
-                "Inconsistent KPI achievement",
-                "Limited awards or recognition",
-                "Lower previous year ratings (2-3)",
-                "May show capability but need guidance"
-            ],
-            "risk": "Medium",
-            "color": "#ff9800",
-            "recommendations": [
-                "Implement structured performance improvement plans",
-                "Assign dedicated mentors or coaches",
-                "Provide targeted skill development training",
-                "Set clear, achievable short-term goals",
-                "Conduct bi-weekly check-ins with direct managers",
-                "Address any barriers to performance (workload, resources, clarity)",
-                "Offer support resources (training budget, time allocation)"
-            ]
-        },
-        3: {
-            "name": "At-Risk & Requires Intervention",
-            "description": "Employees showing significant performance concerns or disengagement",
-            "characteristics": [
-                "Very low training scores and participation",
-                "Consistently fails to meet KPIs",
-                "No recent awards or recognitions",
-                "Poor previous year ratings (1-2)",
-                "Potential signs of disengagement or capability mismatch"
-            ],
-            "risk": "High",
-            "color": "#f44336",
-            "recommendations": [
-                "Immediate manager intervention required",
-                "Schedule urgent one-on-one meetings to understand issues",
-                "Create formal Performance Improvement Plan (PIP) with timeline",
-                "Assess role fit - consider reassignment if skill mismatch",
-                "Investigate workplace issues (conflict, burnout, personal challenges)",
-                "Provide access to employee assistance programs",
-                "Document all interventions and progress",
-                "Consider if role expectations are realistic and achievable",
-                "If no improvement after intervention period, initiate exit process"
-            ]
+        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        st.subheader("📊 Performance Metrics")
+        col3, col4 = st.columns(2)
+        with col3:
+            previous_year_rating = st.slider("Previous Year Rating", min_value=1, max_value=5, value=3)
+            avg_training_score = st.slider("Average Training Score", min_value=0, max_value=100, value=70)
+        with col4:
+            no_of_trainings = st.number_input("Number of Trainings Completed", min_value=0, max_value=20, value=2)
+            KPIs_met = st.selectbox("KPIs Met More Than 80%", ["Yes", "No"], index=0)
+            awards_won = st.selectbox("Awards Won", ["Yes", "No"], index=0)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        submitted = st.form_submit_button("🔍 Predict Segment")
+        if submitted:
+            if model is None:
+                st.error("⚠️ Model not loaded. Cannot make prediction.")
+            else:
+                input_data = pd.DataFrame({
+                    'age': [age],
+                    'education': [education],
+                    'department': [department],
+                    'length_of_service': [length_of_service],
+                    'no_of_trainings': [no_of_trainings],
+                    'previous_year_rating': [previous_year_rating],
+                    'KPIs_met_more_than_80': [1 if KPIs_met=="Yes" else 0],
+                    'awards_won': [1 if awards_won=="Yes" else 0],
+                    'avg_training_score': [avg_training_score],
+                    'gender': [gender],
+                    'region': [region],
+                    'recruitment_channel': [recruitment_channel]
+                })
+                try:
+                    predicted_cluster = model.predict(input_data)[0]
+                    st.session_state.prediction_made = True
+                    st.session_state.prediction = predicted_cluster
+                    st.session_state.inputs = input_data
+                    st.session_state.inputs_dict = input_data.iloc[0].to_dict()
+                    st.success("✅ Prediction made! Switch to 'Prediction Results' tab to view details.")
+                except Exception as e:
+                    st.error(f"❌ Prediction error: {str(e)}")
+
+# ===========================
+# Tab 2: Prediction Results
+# ===========================
+with tabs[1]:
+    st.header("Prediction Results")
+    if 'prediction_made' in st.session_state and st.session_state.prediction_made:
+        predicted_cluster = st.session_state.prediction
+        inputs = st.session_state.inputs
+        inputs_row = inputs.iloc[0]
+
+        # Cluster details
+        cluster_info = {
+            0: {"name":"High Performers & Rising Stars","description":"Exceptional performance, strong growth trajectory","color":"#4caf50"},
+            1: {"name":"Solid Contributors","description":"Steady and reliable performance","color":"#2196f3"},
+            2: {"name":"Development Focus Group","description":"Needs guidance and performance improvement","color":"#ff9800"},
+            3: {"name":"At-Risk & Requires Intervention","description":"Significant performance concerns","color":"#f44336"}
         }
-    }
-    
-    # Get prediction result
-    predicted_cluster = st.session_state.prediction
-    cluster = cluster_info.get(predicted_cluster, cluster_info[0])
-    inputs = st.session_state.inputs
-    
-    # Create two columns
-    col1, col2 = st.columns([1, 1])
-    
-    # LEFT COLUMN: Input Summary
-    with col1:
-        st.subheader("📋 Employee Profile")
-        
-        # Display input summary in a nice box
-        profile_data = {
-            "Age": inputs['age'],
-            "Education": inputs['education'],
-            "Department": inputs['department'],
-            "Service Length": f"{inputs['length_of_service']} years",
-            "Previous Rating": inputs['previous_year_rating'],
-            "Trainings": inputs['no_of_trainings'],
-            "Training Score": f"{inputs['avg_training_score']}%",
-            "KPIs Met": inputs['KPIs_met'],
-            "Awards Won": inputs['awards_won']
+        cluster = cluster_info.get(predicted_cluster, cluster_info[0])
+
+        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        # Prediction box
+        st.markdown(f"<div style='background-color:{cluster['color']}20; padding:20px; border-radius:10px;'>"
+                    f"<h2 style='color:{cluster['color']}; margin:0'>{cluster['name']}</h2>"
+                    f"<p>{cluster['description']}</p></div>", unsafe_allow_html=True)
+
+        # Cluster legend
+        st.caption("Segment color key")
+        legend_cols = st.columns(len(cluster_info))
+        for idx, (c_id, c) in enumerate(cluster_info.items()):
+            with legend_cols[idx]:
+                st.markdown(
+                    f"<div style='border:1px solid #1e293b; border-radius:12px; padding:10px; background-color:{c['color']}10'>"
+                    f"<strong>Cluster {c_id}</strong><br><span style='color:{c['color']}'>{c['name']}</span>"
+                    f"</div>", unsafe_allow_html=True
+                )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Inputs displayed alongside results
+        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        st.subheader("Employee Profile")
+        feature_labels = {
+            "age": "Age",
+            "gender": "Gender",
+            "region": "Region",
+            "education": "Education Level",
+            "department": "Department",
+            "recruitment_channel": "Recruitment Channel",
+            "length_of_service": "Length of Service (years)",
+            "previous_year_rating": "Previous Year Rating",
+            "no_of_trainings": "Number of Trainings Completed",
+            "avg_training_score": "Average Training Score",
+            "KPIs_met_more_than_80": "KPIs Met More Than 80%",
+            "awards_won": "Awards Won",
         }
-        
-        # Create a styled dataframe
-        df_profile = pd.DataFrame(list(profile_data.items()), columns=['Attribute', 'Value'])
-        st.dataframe(df_profile, use_container_width=True, hide_index=True)
-        
-        # Reset button
-        if st.button("🔄 Analyze Another Employee", use_container_width=True):
-            st.session_state.prediction_made = False
-            st.rerun()
-    
-    # RIGHT COLUMN: Prediction Results
-    with col2:
-        st.subheader("🎯 Analysis Results")
-        
-        # Main prediction result
-        st.markdown(f"""
-        <div class="result-box success-box">
-            <h2 style='margin:0;'>✅ {cluster['name']}</h2>
-            <p style='margin:5px 0 0 0; font-size: 1.1em;'>{cluster['description']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Risk level indicator
-        risk_colors = {
-            "Low": "#4caf50",
-            "Medium": "#ff9800",
-            "High": "#f44336"
-        }
-        
-        st.markdown("### 📊 Retention Risk Level")
-        risk_color = risk_colors.get(cluster['risk'], "#gray")
-        st.markdown(f"""
-        <div style='text-align: center; padding: 20px; background-color: {risk_color}20; border-radius: 10px; border: 2px solid {risk_color};'>
-            <h1 style='color: {risk_color}; margin: 0;'>{cluster['risk']}</h1>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Detailed Analysis (expandable)
-        with st.expander("📈 View Detailed Analysis", expanded=True):
-            st.markdown(f"**Predicted Cluster:** {predicted_cluster}")
-            st.markdown("**Model:** K-Means with PCA preprocessing")
-            
-            st.markdown("#### Key Characteristics:")
-            for char in cluster['characteristics']:
-                st.markdown(f"• {char}")
-            
-            st.markdown("#### 📋 HR Action Items:")
-            for idx, rec in enumerate(cluster['recommendations'], 1):
-                st.markdown(f"{idx}. {rec}")
-        
-        # Additional insights section
-        st.markdown("---")
-        st.markdown("### 💡 Quick Insights")
-        
-        # Calculate some basic insights
+
+        profile_rows = []
+        for key, label in feature_labels.items():
+            val = inputs_row[key]
+            if key in ["KPIs_met_more_than_80", "awards_won"]:
+                val = "Yes" if val == 1 else "No"
+            profile_rows.append({"Feature": label, "Value": val})
+
+        profile_df = pd.DataFrame(profile_rows)
+        st.dataframe(profile_df, use_container_width=True, hide_index=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Quick Metrics
+        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        st.subheader("Quick Metrics")
+        col1, col2, col3 = st.columns(3)
         performance_score = (
-            inputs['previous_year_rating'] * 20 + 
-            inputs['avg_training_score'] * 0.5 + 
-            (20 if inputs['KPIs_met'] == "Yes" else 0) +
-            (15 if inputs['awards_won'] == "Yes" else 0)
-        ) / 1.55
-        
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
+            inputs_row['previous_year_rating']*20
+            + inputs_row['avg_training_score']*0.5
+            + (20 if inputs_row['KPIs_met_more_than_80']==1 else 0)
+            + (15 if inputs_row['awards_won']==1 else 0)
+        )/1.55
+        with col1:
             st.metric("Performance Score", f"{performance_score:.1f}%")
-        with col_b:
-            st.metric("Experience", f"{inputs['length_of_service']} yrs")
-        with col_c:
-            st.metric("Training Activity", f"{inputs['no_of_trainings']} courses")
-
-st.markdown("---")
-st.markdown("*Built with Streamlit and scikit-learn | Employee Segmentation ML Project 2024*")
-st.caption("Model uses K-Means clustering with PCA dimensionality reduction for employee segmentation.")
+        with col2:
+            st.metric("Experience", f"{inputs_row['length_of_service']} yrs")
+        with col3:
+            st.metric("Training Activity", f"{inputs_row['no_of_trainings']} courses")
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.info("ℹ️ Please submit employee data in the 'Input Employee Info' tab first.")
